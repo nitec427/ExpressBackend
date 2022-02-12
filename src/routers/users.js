@@ -2,20 +2,7 @@ const User = require('../models/user');
 const express = require('express');
 const auth = require('../middleware/auth');
 const router = new express.Router();
-router.delete('/users/:id', async (req, res) => {
-    // Delete the user by using its id
-    const id = req.params.id;
-    console.log(id);
-    try {
-        const the_user = await User.findByIdAndDelete(id);
-        if (!the_user) {
-            return res.status(404).send('No user found');
-        }
-        res.status(201).send('User successfully deleted');
-    } catch (err) {
-        return res.status(400).send('Server error');
-    }
-});
+
 // Save the user with the request body
 
 // Corresponds to create user in Postman
@@ -90,19 +77,19 @@ router.get('/users/me', auth, async (req, res) => {
         res.status(500).send('Error fetching users');
     }
 });
-
-router.get('/users/:id', auth, async (req, res) => {
-    const _id = req.params.id;
-    try {
-        const user = await User.findById(_id);
-        if (!user) {
-            res.status(404).send('No user found with the given id');
-        }
-        res.send(user);
-    } catch {
-        res.status(500).send();
-    }
-});
+/* The code below is not necessary for our purposes because we use token method to verify the user */
+// router.get('/users/:id', auth, async (req, res) => {
+//     const _id = req.params.id;
+//     try {
+//         const user = await User.findById(_id);
+//         if (!user) {
+//             res.status(404).send('No user found with the given id');
+//         }
+//         res.send(user);
+//     } catch {
+//         res.status(500).send();
+//     }
+// });
 router.patch('/users/:id', async (req, res) => {
     const updates = Object.keys(req.body); // return the keys in the Object
     const allowedUpdates = ['name', 'email', 'password', 'age'];
@@ -126,4 +113,33 @@ router.patch('/users/:id', async (req, res) => {
         res.status(400).send('Please check your user ID');
     }
 });
+router.delete('/users/:id', async (req, res) => {
+    // Delete the user by using its id
+    const id = req.params.id;
+    console.log(id);
+    try {
+        const the_user = await User.findByIdAndDelete(id);
+        if (!the_user) {
+            return res.status(404).send('No user found');
+        }
+        res.status(201).send('User successfully deleted');
+    } catch (err) {
+        return res.status(400).send('Server error');
+    }
+});
+// Updated by the code above. You may delete another user's data without providing the token. (Avoid such cases)
+// router.delete('/users/:id', async (req, res) => {
+//     // Delete the user by using its id
+//     const id = req.params.id;
+//     console.log(id);
+//     try {
+//         const the_user = await User.findByIdAndDelete(id);
+//         if (!the_user) {
+//             return res.status(404).send('No user found');
+//         }
+//         res.status(201).send('User successfully deleted');
+//     } catch (err) {
+//         return res.status(400).send('Server error');
+//     }
+// });
 module.exports = router;
