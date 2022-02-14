@@ -26,9 +26,11 @@ router.post('/users/login', async (req, res) => {
     try {
         // Use object destructuring
         const user = await User.findbyCredentials(req.body);
-        console.log(user);
         const token = await user.generateAuthToken();
         res.status(200);
+        // user is an object which contains "password and tokens field"
+        // const { _id, name, email, age } = user; // this was my solution for hiding private data, another solution is User.methods.toJSON
+
         res.send({ user, token });
     } catch (err) {
         res.sendStatus(404);
@@ -90,39 +92,57 @@ router.get('/users/me', auth, async (req, res) => {
 //         res.status(500).send();
 //     }
 // });
-router.patch('/users/:id', async (req, res) => {
-    const updates = Object.keys(req.body); // return the keys in the Object
-    const allowedUpdates = ['name', 'email', 'password', 'age'];
-    const isValidUpdate = updates.every((update) => allowedUpdates.includes(update));
+// router.patch('/users/:id', async (req, res) => {
+//     const updates = Object.keys(req.body); // return the keys in the Object
+//     const allowedUpdates = ['name', 'email', 'password', 'age'];
+//     const isValidUpdate = updates.every((update) => allowedUpdates.includes(update));
 
-    if (!isValidUpdate) {
-        return res.status(404).send('Non-present key is provided');
+//     if (!isValidUpdate) {
+//         return res.status(404).send('Non-present key is provided');
+//     }
+//     let { id } = req.params;
+
+//     try {
+//         // Find by id and update does not work with pre or post hooks
+//         const user = await User.findById(id);
+//         updates.forEach((update) => (user[update] = req.body[update]));
+//         await user.save();
+//         if (!user) {
+//             res.status(404).send('No user found with the given id');
+//         }
+//         res.status(201).send('User successfully updated');
+//     } catch {
+//         res.status(400).send('Please check your user ID');
+//     }
+// });
+router.patch('/users/me', auth, async (req, res) => {
+    // Get the user
+    // Traverse the given JSON
+    const intendedUpdates = Object.keys(req.body);
+    const availableUpdates = ['name', 'email', 'password', 'age'];
+    // Check whether given update is ok
+    const isValid = intendedUpdates.every((update) => availableUpdates.includes(update));
+    if (!isValid) {
+        return res.sendStatus(404);
     }
-    let { id } = req.params;
-
     try {
-        // Find by id and update does not work with pre or post hooks
-        const user = await User.findById(id);
-        updates.forEach((update) => (user[update] = req.body[update]));
-        await user.save();
-        if (!user) {
-            res.status(404).send('No user found with the given id');
-        }
-        res.status(201).send('User successfully updated');
-    } catch {
-        res.status(400).send('Please check your user ID');
+        intendedUpdates.forEach((update) => (req.user[update] = req.body[update]));
+        await req.user.save();
+        res.status(200).send(req.user);
+    } catch (e) {
+        res.sendStatus(401);
     }
 });
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/me', auth, async (req, res) => {
     // Delete the user by using its id
-    const id = req.params.id;
-    console.log(id);
     try {
-        const the_user = await User.findByIdAndDelete(id);
-        if (!the_user) {
-            return res.status(404).send('No user found');
-        }
-        res.status(201).send('User successfully deleted');
+        // const the_user = await User.findByIdAndDelete(req.user._id);
+        // if (!the_user) {
+        //     return res.status(404).send('No user found');
+        // }
+        // res.status(201).send('User successfully deleted');
+        await req.user.remove();
+        res.send(req.user);
     } catch (err) {
         return res.status(400).send('Server error');
     }

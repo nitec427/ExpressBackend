@@ -6,14 +6,8 @@ const taskSchema = new mongoose.Schema({
     description: { type: String, required: true, trim: true },
     completed: { type: Boolean, required: false, default: false },
     owner: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId /* Specific user */,
         required: true,
-        trim: true,
-        validate(value) {
-            if (!validator.isEmail(value)) {
-                throw new Error('Invalid email provided');
-            }
-        },
     },
     password: { type: String, required: true, trim: true },
 });
