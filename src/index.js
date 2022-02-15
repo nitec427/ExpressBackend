@@ -71,4 +71,29 @@ const main = async () => {
     console.log(user.tasks); */
 };
 
+const multer = require('multer');
+
+const upload = multer({
+    dest: 'images',
+    limits: { fileSize: 1048576 },
+    fileFilter(req, file, cb) {
+        if (!file.originalname.match(/\.(doc|docx|png)$/)) {
+            cb(new Error('Please upload Word document or png file'));
+        }
+        cb(undefined, true);
+    },
+});
+// const errorMiddle = (req, res, next) => {
+//     throw new Error('From the middleware');
+// };
+app.post(
+    '/upload',
+    upload.single('upload'),
+    (req, res) => {
+        res.sendStatus(200);
+    },
+    (err, req, res, next) => {
+        res.status(400).send({ error: err.message });
+    }
+);
 // main();

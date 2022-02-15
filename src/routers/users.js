@@ -2,7 +2,7 @@ const User = require('../models/user');
 const express = require('express');
 const auth = require('../middleware/auth');
 const router = new express.Router();
-
+const multer = require('multer');
 // Save the user with the request body
 
 // Corresponds to create user in Postman
@@ -21,6 +21,50 @@ router.post('/users/me', async (req, res) => {
         res.status(404).send(err);
     }
 });
+const avatar = multer({
+    limits: { fileSize: 1048576 },
+    fileFilter(req, file, cb) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            cb(new Error('Invalid file extension. Upload an image please'));
+        }
+        cb(undefined, true);
+    },
+});
+router.post(
+    '/users/me/avatar',
+    auth,
+    avatar.single('avatar'),
+    async (req, res) => {
+        req.user.avatar = req.file.buffer;
+        await req.user.save();
+        res.sendStatus(200);
+    },
+    (err, req, res, next) => {
+        res.status(404).send({ error: err.message });
+    }
+);
+router.get('/users/:id/avatar', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user || !user.avatar) throw new Error('No avatar detected');
+        res.set('Content-Type', 'image/jpg');
+        res.send(user.avatar);
+    } catch (e) {
+        res.status(404).send();
+    }
+});
+router.delete(
+    '/users/me/avatar',
+    auth,
+    async (req, res) => {
+        req.user.avatar = undefined;
+        await req.user.save();
+        res.sendStatus(200);
+    },
+    (err, req, res, next) => {
+        res.status(404).send({ error: err.message });
+    }
+);
 /* Use auth middleware just with Sign Up and Log in */
 router.post('/users/login', async (req, res) => {
     try {
